@@ -11,15 +11,19 @@ public:
     void Shutdown();
 
     virtual void AttachApp(IApplication* pApplication);
+    virtual const IApplication* GetApp() const;
+
     virtual CCommandSystem& GetCommandSystem();
     virtual CCvarSystem& GetCvarSystem();
     virtual CEventSystem& GetEventSystem();
+    virtual CWindowSystem& GetWindowSystem();
 private:
     IApplication* m_pParentApp = nullptr;
 
     CCommandSystem m_CommandSystem;
     CCvarSystem m_CvarSystem;
     CEventSystem m_EventSystem;
+    CWindowSystem m_WindowSystem;
 };
 
 CEngine g_engine;
@@ -34,10 +38,15 @@ int CEngine::Main(int iArgc, const str_t* pArgv)
         return MAIN_ERROR;
     }
 
+    m_pParentApp->Init();
+
     while (m_pParentApp->IsRunning())
     {
         Tick();
+
         m_pParentApp->Tick();
+    
+        m_WindowSystem.EndTick(); // Special case to flip the fb
     }
 
     Shutdown();
@@ -63,6 +72,11 @@ bool CEngine::Init(int iArgc, const str_t* pArgv)
         return false;
     }
 
+    if (!m_WindowSystem.Init())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -75,11 +89,19 @@ void CEngine::Shutdown()
 
 void CEngine::Tick()
 {
+    m_EventSystem.Reset(); // Clear the event queue
+
+    m_WindowSystem.Tick();
 }
 
 void CEngine::AttachApp(IApplication* pApp)
 {
     m_pParentApp = pApp;
+}
+
+const IApplication* CEngine::GetApp() const
+{
+    return m_pParentApp;
 }
 
 CCommandSystem& CEngine::GetCommandSystem()
@@ -95,4 +117,9 @@ CCvarSystem &CEngine::GetCvarSystem()
 CEventSystem& CEngine::GetEventSystem()
 {
     return m_EventSystem;
+}
+
+CWindowSystem& CEngine::GetWindowSystem()
+{
+    return m_WindowSystem;
 }

@@ -28,6 +28,11 @@ void CEventSystem::Shutdown()
     delete m_EventQueue;
 }
 
+void CEventSystem::Reset()
+{
+    m_iEventIndex = 0;
+}
+
 int CEventSystem::GetEventCount() const
 {
     return m_iEventIndex;

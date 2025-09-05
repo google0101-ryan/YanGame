@@ -10,4 +10,6 @@ public:
     virtual void Shutdown() = 0;
 
     virtual bool IsRunning() = 0;
+
+    virtual str_t GetName() const = 0;
 };

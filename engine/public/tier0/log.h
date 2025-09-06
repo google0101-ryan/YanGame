@@ -2,6 +2,8 @@
 
 #include <print>
 #include <ctime>
+#include <exception>
+
 #include <tier0/types.h>
 
 enum LogLevel_t
@@ -42,4 +44,4 @@ static void LogTimestamp()
 #define LOG_INFO(x, ...) do { std::print(COLOR_INFO); LogTimestamp(); LOG_LEVEL(x, LL_INFO, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
 #define LOG_WARN(x, ...) do { std::print(COLOR_WARN); LogTimestamp(); LOG_LEVEL(x, LL_WARN, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
 #define LOG_ERROR(x, ...) do { std::print(COLOR_ERROR); LogTimestamp(); LOG_LEVEL(x, LL_ERROR, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
-#define LOG_FATAL(x, ...) do { std::print(COLOR_FATAL); LogTimestamp(); LOG_LEVEL(x, LL_FATAL, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
+#define LOG_FATAL(x, ...) do { std::print(COLOR_FATAL); LogTimestamp(); LOG_LEVEL(x, LL_FATAL, ##__VA_ARGS__); std::print(COLOR_RESET); throw std::runtime_error("FATAL ERROR OCCURED!"); } while (0)

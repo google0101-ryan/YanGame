@@ -17,6 +17,7 @@ public:
     virtual CCvarSystem& GetCvarSystem();
     virtual CEventSystem& GetEventSystem();
     virtual CWindowSystem& GetWindowSystem();
+    virtual CRenderSystem& GetRenderSystem();
 private:
     IApplication* m_pParentApp = nullptr;
 
@@ -24,6 +25,7 @@ private:
     CCvarSystem m_CvarSystem;
     CEventSystem m_EventSystem;
     CWindowSystem m_WindowSystem;
+    CRenderSystem m_RenderSystem;
 };
 
 CEngine g_engine;
@@ -77,6 +79,11 @@ bool CEngine::Init(int iArgc, const str_t* pArgv)
         return false;
     }
 
+    if (!m_RenderSystem.Init())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -122,4 +129,9 @@ CEventSystem& CEngine::GetEventSystem()
 CWindowSystem& CEngine::GetWindowSystem()
 {
     return m_WindowSystem;
+}
+
+CRenderSystem& CEngine::GetRenderSystem()
+{
+    return m_RenderSystem;
 }

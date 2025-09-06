@@ -20,7 +20,10 @@ bool CWindowSystem::Init()
         return false;
     }
 
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
     m_pHandle = glfwCreateWindow(g_windowWidth.GetInt(), g_windowHeight.GetInt(), g_pEngine->GetApp()->GetName(), NULL, NULL);
+    
 
     if (!m_pHandle)
     {
@@ -32,11 +35,6 @@ bool CWindowSystem::Init()
 
     m_iWidth = g_windowWidth.GetInt();
     m_iHeight = g_windowHeight.GetInt();
-
-    glfwMakeContextCurrent(m_pHandle);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     return true;
 }
@@ -66,4 +64,17 @@ void CWindowSystem::Tick()
 void CWindowSystem::EndTick()
 {
     glfwSwapBuffers(m_pHandle);
+}
+
+str_t *CWindowSystem::GetExtensions(u32 *extensionCount)
+{
+    return glfwGetRequiredInstanceExtensions(extensionCount);
+}
+
+void *CWindowSystem::CreateSurface(void* instanceHandle)
+{
+    VkSurfaceKHR surfaceHandle;
+    if (glfwCreateWindowSurface((VkInstance)instanceHandle, m_pHandle, nullptr, &surfaceHandle) != VK_SUCCESS)
+        LOG_ERROR("Failed to create window surface!\n");
+    return surfaceHandle;
 }

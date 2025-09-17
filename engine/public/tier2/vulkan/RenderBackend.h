@@ -5,6 +5,15 @@
 #include <tier2/vulkan/Device.h>
 #include <tier2/vulkan/SwapChain.h>
 #include <tier2/vulkan/RenderPass.h>
+#include <tier2/vulkan/CommandBuffer.h>
+#include <tier2/vulkan/VMA.h>
+#include <tier2/vulkan/Buffer.h>
+#include <tier2/vulkan/StagingBuffer.h>
+
+#include <tier2/vulkan/Fence.h>
+#include <tier2/vulkan/Semaphore.h>
+
+#include <tier2/vulkan/RenderDefs.h>
 
 class CVulkanBackend : public IRenderBackend
 {
@@ -17,6 +26,13 @@ public:
     const CVkInstance& GetInstance() const { return m_Instance; }
     const VkSurfaceKHR& GetSurface() const { return m_Surface; }
     const CVkDevice& GetDevice() const { return m_Device; }
+    const CVkSwapChain& GetSwapChain() const { return m_SwapChain; }
+    CVkMemoryAllocator& GetAllocator() { return m_Allocator; }
+
+    int GetCurFrame() const { return m_iCurFrame; }
+private:
+    void DrawFrame();
+    void RecreateSwapchain();
 private:
     CVkInstance m_Instance;
     VkSurfaceKHR m_Surface;
@@ -24,6 +40,19 @@ private:
     CVkSwapChain m_SwapChain;
 
     CRenderPass m_MainRenderPass;
+
+    CVkSemaphore m_RenderDoneSema[MAX_FRAMES];
+    CVkFence m_InFlight[MAX_FRAMES];
+
+    CCommandBuffer m_MainCommandBuffers[MAX_FRAMES];
+
+    int m_iCurFrame = 0;
+
+    CVkMemoryAllocator m_Allocator;
+    CVkBuffer m_VertexBuffer;
+    CVkStagingBuffer m_VertStagingBuffer;
+    CVkBuffer m_IndexBuffer;
+    CVkStagingBuffer m_IndexStagingBuffer;
 };
 
 extern CVulkanBackend* g_pRenderBackend;

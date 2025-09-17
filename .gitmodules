@@ -1,3 +1,6 @@
 [submodule "common/external/GLFW"]
 	path = common/external/GLFW
 	url = https://github.com/GLFW/GLFW
+[submodule "common/external/VulkanMemoryAllocator"]
+	path = common/external/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

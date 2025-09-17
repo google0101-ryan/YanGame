@@ -14,6 +14,12 @@ struct RBCommand_t
     void* pData;
 };
 
+// Param struct for draw command
+struct DrawData_t
+{
+    float fTimeMs; // Time, in milliseconds, for one frame
+};
+
 abstract_class IRenderBackend : public ISystem
 {
 public:
@@ -25,6 +31,8 @@ class CRenderSystem : public ISystem
 public:
     virtual bool Init();
     virtual void Shutdown();
+
+    void Tick();
 private:
     IRenderBackend* m_pRenderBackend;
 };

@@ -1,6 +1,10 @@
 #include <core/Engine.h>
 #include <tier0/assert.h>
 
+#include <chrono>
+
+Time g_engineTime = {};
+
 class CEngine : public IEngine
 {
 public:
@@ -18,6 +22,7 @@ public:
     virtual CEventSystem& GetEventSystem();
     virtual CWindowSystem& GetWindowSystem();
     virtual CRenderSystem& GetRenderSystem();
+    virtual CFileSystem& GetFileSystem();
 private:
     IApplication* m_pParentApp = nullptr;
 
@@ -26,6 +31,7 @@ private:
     CEventSystem m_EventSystem;
     CWindowSystem m_WindowSystem;
     CRenderSystem m_RenderSystem;
+    CFileSystem m_FileSystem;
 };
 
 CEngine g_engine;
@@ -74,6 +80,11 @@ bool CEngine::Init(int iArgc, const str_t* pArgv)
         return false;
     }
 
+    if (!m_FileSystem.Init())
+    {
+        return false;
+    }
+
     if (!m_WindowSystem.Init())
     {
         return false;
@@ -96,9 +107,18 @@ void CEngine::Shutdown()
 
 void CEngine::Tick()
 {
+    static float lastFrame = glfwGetTime();
+    float currentFrame = glfwGetTime();
+    float deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;  
+
+    g_engineTime.m_DeltaTime = deltaTime;
+
     m_EventSystem.Reset(); // Clear the event queue
 
     m_WindowSystem.Tick();
+
+    m_RenderSystem.Tick();
 }
 
 void CEngine::AttachApp(IApplication* pApp)
@@ -134,4 +154,9 @@ CWindowSystem& CEngine::GetWindowSystem()
 CRenderSystem& CEngine::GetRenderSystem()
 {
     return m_RenderSystem;
+}
+
+CFileSystem& CEngine::GetFileSystem()
+{
+    return m_FileSystem;
 }

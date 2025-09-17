@@ -7,6 +7,8 @@
 
 void CVkSwapChain::Init()
 {
+    static bool firstTime = true;
+
     VkSurfaceCapabilitiesKHR surfCaps;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(g_pRenderBackend->GetDevice().GetPhysicalHandle(),
                                                 g_pRenderBackend->GetSurface(),
@@ -43,7 +45,7 @@ void CVkSwapChain::Init()
         createInfo.minImageCount = surfCaps.maxImageCount;
     createInfo.imageFormat = format.format;
     createInfo.imageColorSpace = format.colorSpace;
-    createInfo.imageExtent = surfCaps.currentExtent;
+    createInfo.imageExtent = surfCaps.maxImageExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     u32 indices[] = { g_pRenderBackend->GetDevice().GetGraphicsQueueIdx(), g_pRenderBackend->GetDevice().GetPresentQueueIdx() };
@@ -67,14 +69,16 @@ void CVkSwapChain::Init()
     vkGetSwapchainImagesKHR(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_SwapChain, &imageCount, nullptr);
 
     m_Images.resize(imageCount);
-    m_ImageViews.resize(imageCount);
-    vkGetSwapchainImagesKHR(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_SwapChain, &imageCount, m_Images.data());
+    std::vector<VkImage> images(imageCount);
+    vkGetSwapchainImagesKHR(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_SwapChain, &imageCount, images.data());
 
     for (int i = 0; i < imageCount; i++)
     {
+        VkImageView view;
+
         VkImageViewCreateInfo imageViewInfo = {};
         imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewInfo.image = m_Images[i];
+        imageViewInfo.image = images[i];
         imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         imageViewInfo.format = format.format;
         imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
@@ -87,9 +91,49 @@ void CVkSwapChain::Init()
         imageViewInfo.subresourceRange.baseArrayLayer = 0;
         imageViewInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(g_pRenderBackend->GetDevice().GetDeviceHandle(), &imageViewInfo, nullptr, &m_ImageViews[i]) != VK_SUCCESS)
+        if (vkCreateImageView(g_pRenderBackend->GetDevice().GetDeviceHandle(), &imageViewInfo, nullptr, &view) != VK_SUCCESS)
             LOG_FATAL("Failed to create image view for image {}\n", i);
+
+        m_Images[i] = CVkImage(images[i], view);
     }
 
-    LOG_INFO("Swapchain created with {} images, {}x{}\n", m_Images.size(), surfCaps.currentExtent.width, surfCaps.currentExtent.height);
+    if (firstTime)
+        LOG_INFO("Swapchain created with {} images, {}x{}\n", m_Images.size(), surfCaps.maxImageExtent.width, surfCaps.maxImageExtent.height);
+    firstTime = false;
+
+    m_Extents = surfCaps.maxImageExtent;
+    m_Format = format.format;
+
+    for (int i = 0; i < MAX_FRAMES; i++)
+        m_ImageAvailable[i].Init();
+}
+
+void CVkSwapChain::Shutdown()
+{
+    for (int i = 0; i < m_Images.size(); i++)
+        vkDestroyImageView(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_Images[i].GetView(), nullptr);
+    for (int i = 0; i < MAX_FRAMES; i++)
+        m_ImageAvailable[i].Shutdown();
+    vkDestroySwapchainKHR(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_SwapChain, nullptr);
+}
+
+CVkImage* CVkSwapChain::AcquireNextImage(u32* index)
+{
+    auto result = vkAcquireNextImageKHR(g_pRenderBackend->GetDevice().GetDeviceHandle(), m_SwapChain, UINT64_MAX, m_ImageAvailable[g_pRenderBackend->GetCurFrame()].GetHandle(), VK_NULL_HANDLE, index);
+    
+    while (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+        // Recreate the swapchain and reacquire its image
+        vkDeviceWaitIdle(g_pRenderBackend->GetDevice().GetDeviceHandle());
+        Shutdown();
+        Init();
+        return nullptr;
+    }
+    
+    return &m_Images[*index];
+}
+
+CVkSemaphore &CVkSwapChain::GetSema()
+{
+    return m_ImageAvailable[g_pRenderBackend->GetCurFrame()];
 }

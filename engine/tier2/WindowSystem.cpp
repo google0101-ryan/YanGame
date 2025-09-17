@@ -10,6 +10,27 @@
 CCvar g_windowWidth("r_width", "1920", "The width of the render target", 0);
 CCvar g_windowHeight("r_height", "1080", "The height of the render target", 0);
 
+static void HandleGlfwKeyPress(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    Event evt;
+
+    switch (action)
+    {
+    case GLFW_PRESS:
+        evt.type = ET_KEY_PRESS;
+        break;
+    case GLFW_RELEASE:
+        evt.type = ET_KEY_RELEASE;
+        break;
+    case GLFW_REPEAT:
+        evt.type = ET_KEY_HELD;
+        break;
+    }
+
+    evt.iData = key;
+    g_pEngine->GetEventSystem().PushEvent(evt);
+}
+
 bool CWindowSystem::Init()
 {
     if (glfwInit() != GLFW_TRUE)
@@ -24,7 +45,6 @@ bool CWindowSystem::Init()
 
     m_pHandle = glfwCreateWindow(g_windowWidth.GetInt(), g_windowHeight.GetInt(), g_pEngine->GetApp()->GetName(), NULL, NULL);
     
-
     if (!m_pHandle)
     {
         str_t err;
@@ -35,6 +55,8 @@ bool CWindowSystem::Init()
 
     m_iWidth = g_windowWidth.GetInt();
     m_iHeight = g_windowHeight.GetInt();
+
+    glfwSetKeyCallback(m_pHandle, HandleGlfwKeyPress);
 
     return true;
 }

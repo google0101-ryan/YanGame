@@ -10,12 +10,16 @@ class CVkDevice
 public:
     void PushExtension(str_t ext);
     void Init();
+    void Shutdown();
 
     VkPhysicalDevice GetPhysicalHandle() const { return m_PhysicalHandle; }
     VkDevice GetDeviceHandle() const { return m_DeviceHandle; }
 
     u32 GetGraphicsQueueIdx() const { return m_GraphicsQueueIdx; }
     u32 GetPresentQueueIdx() const { return m_PresentQueueIdx; }
+
+    VkQueue GetGraphicsQueue() const { return m_GraphicsQueue; }
+    VkQueue GetPresentQueue() const { return m_PresentQueue; }
 private:
     VkPhysicalDevice m_PhysicalHandle;
     VkDevice m_DeviceHandle;

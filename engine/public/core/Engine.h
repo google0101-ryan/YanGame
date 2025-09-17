@@ -5,6 +5,7 @@
 #include <tier1/Command.h>
 #include <tier1/Cvar.h>
 #include <tier1/Event.h>
+#include <tier1/FileSystem.h>
 
 #include <tier2/WindowSystem.h>
 #include <tier2/RenderSystem.h>
@@ -14,6 +15,13 @@ enum FailureCode_t
     MAIN_OKAY = 0,
     MAIN_ERROR = -1,
 };
+
+struct Time
+{
+    float m_DeltaTime;
+};
+
+extern Time g_engineTime;
 
 // The engine itself also implements the Init/Tick/Shutdown loop, so it inherits from IApplication
 abstract_class IEngine
@@ -29,6 +37,7 @@ public:
     virtual CEventSystem& GetEventSystem() = 0;
     virtual CWindowSystem& GetWindowSystem() = 0;
     virtual CRenderSystem& GetRenderSystem() = 0;
+    virtual CFileSystem& GetFileSystem() = 0;
 };
 
 extern IEngine* g_pEngine;

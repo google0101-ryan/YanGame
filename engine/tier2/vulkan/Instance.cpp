@@ -19,7 +19,7 @@ void CVkInstance::Init()
     appInfo.engineVersion = VK_MAKE_API_VERSION(0, 0, 0, 1);
     appInfo.pApplicationName = g_pEngine->GetApp()->GetName();
     appInfo.applicationVersion = appInfo.engineVersion;
-    appInfo.apiVersion = VK_API_VERSION_1_3; // Most likely to be supported by the vast majority of hw
+    appInfo.apiVersion = VK_API_VERSION_1_4; // Most likely to be supported by the vast majority of hw
     
     u32 extCount;
     str_t* extensions = g_pEngine->GetWindowSystem().GetExtensions(&extCount);
@@ -34,4 +34,9 @@ void CVkInstance::Init()
     
     if (vkCreateInstance(&createInfo, nullptr, &m_Handle))
         LOG_FATAL("Failed to create vulkan instance!\n");
+}
+
+void CVkInstance::Shutdown()
+{
+    vkDestroyInstance(m_Handle, nullptr);
 }

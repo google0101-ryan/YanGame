@@ -13,3 +13,11 @@ void CRenderSystem::Shutdown()
 {
     m_pRenderBackend->Shutdown();
 }
+
+void CRenderSystem::Tick()
+{
+    RBCommand_t cmd;
+    cmd.type = RB_DRAW;
+
+    m_pRenderBackend->SubmitCommand(cmd);
+}

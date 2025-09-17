@@ -3,6 +3,7 @@
 #include <print>
 #include <ctime>
 #include <exception>
+#include <format>
 
 #include <tier0/types.h>
 
@@ -40,8 +41,20 @@ static void LogTimestamp()
     std::print("[{:04}-{:02}-{:02}-T{:02}:{:02}:{:02}]", now->tm_year + 1900, now->tm_mon + 1, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
 }
 
+#ifndef _NDEBUG
+
 #define LOG_TRACE(x, ...) do { std::print(COLOR_TRACE); LogTimestamp(); LOG_LEVEL(x, LL_TRACE, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
 #define LOG_INFO(x, ...) do { std::print(COLOR_INFO); LogTimestamp(); LOG_LEVEL(x, LL_INFO, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
 #define LOG_WARN(x, ...) do { std::print(COLOR_WARN); LogTimestamp(); LOG_LEVEL(x, LL_WARN, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
 #define LOG_ERROR(x, ...) do { std::print(COLOR_ERROR); LogTimestamp(); LOG_LEVEL(x, LL_ERROR, ##__VA_ARGS__); std::print(COLOR_RESET); } while (0)
-#define LOG_FATAL(x, ...) do { std::print(COLOR_FATAL); LogTimestamp(); LOG_LEVEL(x, LL_FATAL, ##__VA_ARGS__); std::print(COLOR_RESET); throw std::runtime_error("FATAL ERROR OCCURED!"); } while (0)
+#define LOG_FATAL(x, ...) do { std::print(COLOR_FATAL); LogTimestamp(); LOG_LEVEL(x, LL_FATAL, ##__VA_ARGS__); std::print(COLOR_RESET); throw std::runtime_error(std::format(x, ##__VA_ARGS__)); } while (0)
+
+#else
+
+#define LOG_TRACE(x, ...)
+#define LOG_INFO(x, ...)
+#define LOG_WARN(x, ...)
+#define LOG_ERROR(x, ...)
+#define LOG_FATAL(x, ...)
+
+#endif

@@ -4,6 +4,7 @@
 #include <tier0/log.h>
 
 #include <vector>
+#include <cstring>
 
 void CVkDevice::PushExtension(str_t ext)
 {
@@ -25,9 +26,26 @@ void CVkDevice::Init()
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(devices[i], &props);
 
-        if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-            m_PhysicalHandle = devices[i];
-        else if (!m_PhysicalHandle)
+        // Query shader object support
+        uint32_t count = 0;
+        vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &count, nullptr);
+        std::vector<VkExtensionProperties> extensions(count);
+        vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &count, extensions.data());
+
+        bool foundShaderObjs = false;
+        for (auto& ext : extensions)
+        {
+            if (!strcmp(ext.extensionName, "VK_EXT_shader_object"))
+            {
+                foundShaderObjs = true;
+                break;
+            }
+        }
+
+        if (!foundShaderObjs)
+            continue;
+
+        if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || !m_PhysicalHandle)
             m_PhysicalHandle = devices[i];
     }
 
@@ -77,17 +95,35 @@ void CVkDevice::Init()
         queueInfos.push_back(queueInfo);
     }
 
+    VkPhysicalDeviceFeatures features = {};
+    features.samplerAnisotropy = VK_TRUE;
+
+    VkPhysicalDeviceDynamicRenderingFeatures dynamic = {};
+    dynamic.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+    dynamic.dynamicRendering = VK_TRUE;
+
+    VkPhysicalDeviceShaderObjectFeaturesEXT enableShaders = {};
+    enableShaders.pNext = &dynamic;
+    enableShaders.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_FEATURES_EXT;
+    enableShaders.shaderObject = VK_TRUE;
 
     VkDeviceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pNext = &enableShaders;
     createInfo.queueCreateInfoCount = queueInfos.size();
     createInfo.pQueueCreateInfos = queueInfos.data();
     createInfo.enabledExtensionCount = m_DesiredExtensions.size();
     createInfo.ppEnabledExtensionNames = m_DesiredExtensions.data();
+    createInfo.pEnabledFeatures = &features;
 
     if (vkCreateDevice(m_PhysicalHandle, &createInfo, nullptr, &m_DeviceHandle) != VK_SUCCESS)
         LOG_FATAL("Failed to create vulkan device!\n");
 
     vkGetDeviceQueue(m_DeviceHandle, m_GraphicsQueueIdx, 0, &m_GraphicsQueue);
     vkGetDeviceQueue(m_DeviceHandle, m_PresentQueueIdx, 0, &m_PresentQueue);
+}
+
+void CVkDevice::Shutdown()
+{
+    vkDestroyDevice(m_DeviceHandle, nullptr);
 }

@@ -29,24 +29,19 @@ void CRenderPass::InitDefaults()
     m_CullMode = VK_CULL_MODE_BACK_BIT;
 }
 
+extern VkDescriptorSetLayout& GetSetLayout();
+
 void CRenderPass::Finalize()
 {
     VkPipelineLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.pushConstantRangeCount = 1;
     layoutInfo.pPushConstantRanges = &m_PushConstant;
+    layoutInfo.setLayoutCount = 1;
+    layoutInfo.pSetLayouts = &GetSetLayout();
 
     if (vkCreatePipelineLayout(g_pRenderBackend->GetDevice().GetDeviceHandle(), &layoutInfo, nullptr, &m_PipeLayout) != VK_SUCCESS)
         LOG_FATAL("Failed to create vulkan pipeline layout\n");
-
-    std::vector<VkFormat> formats(m_iOutputCount);
-    for (int i = 0; i < m_iOutputCount; i++)
-        formats[i] = g_pRenderBackend->GetSwapChain().GetFormat();
-
-    VkPipelineRenderingCreateInfo renderInfo = {};
-    renderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-    renderInfo.colorAttachmentCount = m_iOutputCount;
-    renderInfo.pColorAttachmentFormats = formats.data();
 }
 
 void CRenderPass::Shutdown()
@@ -88,6 +83,8 @@ void CRenderPass::SetShader(str_t name)
         shaderInfo.pName = "main";
         shaderInfo.pushConstantRangeCount = 1;
         shaderInfo.pPushConstantRanges = &m_PushConstant;
+        shaderInfo.setLayoutCount = 1;
+        shaderInfo.pSetLayouts = &GetSetLayout();
 
         if (s_CreateShaders(g_pRenderBackend->GetDevice().GetDeviceHandle(), 1, &shaderInfo, nullptr, &m_VertShader) != VK_SUCCESS)
             LOG_FATAL("Failed to compile shader \"{}\"\n", name);

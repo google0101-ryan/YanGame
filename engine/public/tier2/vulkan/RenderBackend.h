@@ -33,6 +33,8 @@ public:
 private:
     void DrawFrame();
     void RecreateSwapchain();
+
+    void AddGeometry(Geometry* pGeo);
 private:
     CVkInstance m_Instance;
     VkSurfaceKHR m_Surface;

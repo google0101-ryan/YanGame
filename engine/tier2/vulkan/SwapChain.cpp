@@ -94,7 +94,7 @@ void CVkSwapChain::Init()
         if (vkCreateImageView(g_pRenderBackend->GetDevice().GetDeviceHandle(), &imageViewInfo, nullptr, &view) != VK_SUCCESS)
             LOG_FATAL("Failed to create image view for image {}\n", i);
 
-        m_Images[i] = CVkImage(images[i], view);
+        m_Images[i] = CVkImage(images[i], view, m_Extents.width, m_Extents.height);
     }
 
     if (firstTime)

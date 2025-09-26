@@ -21,6 +21,7 @@ public:
 
     void SetRenderPass(CRenderPass& pass);
     void UpdatePushConstant(CRenderPass &pass, void* pData, size_t size);
+    void BindDescriptorSet(VkDescriptorSet& set);
     void EndRenderPass();
 
     void TransitionImage(
@@ -36,6 +37,7 @@ public:
 
     // Buffer operations
     void CopyBuffer(CVkBuffer& a, CVkBuffer& b, size_t offs, size_t size);
+    void CopyBufferToImage(CVkImage& a, VkBuffer b, size_t offs, size_t size);
     void BindVertexBuffer(CVkBuffer& buffer, VkDeviceSize offs);
     void BindIndexBuffer(CVkBuffer& buffer, VkDeviceSize offs);
 
@@ -43,4 +45,5 @@ public:
 private:
     VkCommandPool m_Pool;
     VkCommandBuffer m_Buffer;
+    VkPipelineLayout m_CurLayout;
 };

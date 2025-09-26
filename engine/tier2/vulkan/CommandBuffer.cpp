@@ -72,6 +72,7 @@ void CCommandBuffer::SetRenderPass(CRenderPass &pass)
     }
 
     std::vector<VkRenderingAttachmentInfoKHR> attachments;
+    VkRenderingAttachmentInfoKHR depthInfo = {};
     for (int i = 0; i < pass.m_iOutputCount; i++)
     {
         VkRenderingAttachmentInfoKHR info = {};
@@ -92,6 +93,18 @@ void CCommandBuffer::SetRenderPass(CRenderPass &pass)
     info.layerCount = 1;
     info.colorAttachmentCount = attachments.size();
     info.pColorAttachments = attachments.data();
+
+    if (pass.hasDepth)
+    {
+        depthInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        depthInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthInfo.imageView = pass.m_DepthAttachment.GetImage()->GetView();
+        depthInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        depthInfo.clearValue.depthStencil.depth = 1.0f;
+
+        info.pDepthAttachment = &depthInfo;
+    }
 
     vkCmdBeginRendering(m_Buffer, &info);
 
@@ -159,9 +172,20 @@ void CCommandBuffer::SetRenderPass(CRenderPass &pass)
     s_vkCmdSetPolygonModeEXT(m_Buffer, VK_POLYGON_MODE_FILL);
     vkCmdSetFrontFace(m_Buffer, VK_FRONT_FACE_CLOCKWISE);
 
-    vkCmdSetDepthTestEnable(m_Buffer, VK_FALSE);
+    if (pass.hasDepth)
+    {
+        vkCmdSetDepthWriteEnable(m_Buffer, VK_TRUE);
+        vkCmdSetDepthTestEnable(m_Buffer, VK_TRUE);
+        vkCmdSetDepthCompareOp(m_Buffer, VK_COMPARE_OP_LESS);
+    }
+    else
+    {
+        vkCmdSetDepthWriteEnable(m_Buffer, VK_FALSE);
+        vkCmdSetDepthTestEnable(m_Buffer, VK_FALSE);
+        vkCmdSetDepthCompareOp(m_Buffer, VK_COMPARE_OP_ALWAYS);
+    }
+
     vkCmdSetStencilTestEnable(m_Buffer, VK_FALSE);
-    vkCmdSetDepthCompareOp(m_Buffer, VK_COMPARE_OP_ALWAYS);
     vkCmdSetDepthBoundsTestEnable(m_Buffer, VK_FALSE);
     vkCmdSetDepthBiasEnable(m_Buffer, VK_FALSE);
     
@@ -179,10 +203,13 @@ void CCommandBuffer::SetRenderPass(CRenderPass &pass)
 
     vkCmdSetViewportWithCount(m_Buffer, 1, &viewport);
     vkCmdSetScissorWithCount(m_Buffer, 1, &scissor);
-    vkCmdSetCullMode(m_Buffer, VK_CULL_MODE_NONE);
+    vkCmdSetFrontFace(m_Buffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+    vkCmdSetCullMode(m_Buffer, VK_CULL_MODE_BACK_BIT);
 
     
     s_vkCmdSetVertexInputEXT(m_Buffer, 1, &pass.inputBinding, pass.m_Attributes.size(), pass.m_Attributes.data());
+
+    m_CurLayout = pass.m_PipeLayout;
 }
 
 void CCommandBuffer::UpdatePushConstant(CRenderPass &pass, void *pData, size_t size)
@@ -190,9 +217,15 @@ void CCommandBuffer::UpdatePushConstant(CRenderPass &pass, void *pData, size_t s
     vkCmdPushConstants(m_Buffer, pass.m_PipeLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, size, pData);
 }
 
+void CCommandBuffer::BindDescriptorSet(VkDescriptorSet& set)
+{
+    vkCmdBindDescriptorSets(m_Buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_CurLayout, 0, 1, &set, 0, NULL);
+}
 void CCommandBuffer::EndRenderPass()
 {
     vkCmdEndRendering(m_Buffer);
+
+    m_CurLayout = VK_NULL_HANDLE;
 }
 
 void CCommandBuffer::TransitionImage(const CVkImage &image, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout,
@@ -220,6 +253,24 @@ void CCommandBuffer::CopyBuffer(CVkBuffer &a, CVkBuffer &b, size_t offs, size_t 
     region.size = size;
 
     vkCmdCopyBuffer(m_Buffer, b.GetHandle(), a.GetHandle(), 1, &region);
+}
+
+void CCommandBuffer::CopyBufferToImage(CVkImage &a, VkBuffer b, size_t offs, size_t size)
+{
+    VkBufferImageCopy copy = {};
+    copy.bufferOffset = offs;
+    copy.bufferRowLength = 0;
+    copy.bufferImageHeight = 0;
+
+    copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copy.imageSubresource.baseArrayLayer = 0;
+    copy.imageSubresource.layerCount = 1;
+    copy.imageSubresource.mipLevel = 0;
+
+    copy.imageOffset = VkOffset3D{0, 0, 0};
+    copy.imageExtent = {a.GetWidth(), a.GetHeight(), 1};
+
+    vkCmdCopyBufferToImage(m_Buffer, b, a.GetHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 }
 
 void CCommandBuffer::BindVertexBuffer(CVkBuffer &buffer, VkDeviceSize offs)

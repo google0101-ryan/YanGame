@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tier0/System.h>
+#include <Geometry.h>
 
 enum RBCommands_t
 {
@@ -31,6 +32,8 @@ class CRenderSystem : public ISystem
 public:
     virtual bool Init();
     virtual void Shutdown();
+
+    void SubmitGeometry(Geometry* pGeo);
 
     void Tick();
 private:

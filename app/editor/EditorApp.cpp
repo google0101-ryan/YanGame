@@ -7,6 +7,7 @@
 
 #include <tier2/GameObject.h>
 #include <components/Camera.h>
+#include <components/RenderModel.h>
 
 class CFlyCamera : public ICameraComponent
 {
@@ -121,6 +122,7 @@ private:
     bool m_bIsRunning;
 
     IGameObject* m_pPlayer;
+    IGameObject* m_pSpinnyCubeWeeWeeWee;
 };
 
 bool CEditorApp::Init()
@@ -132,6 +134,11 @@ bool CEditorApp::Init()
 
     m_bIsRunning = true;
 
+    m_pSpinnyCubeWeeWeeWee = new IGameObject();
+    m_pSpinnyCubeWeeWeeWee->AddComponent(new CRenderModel("dummy"));
+
+    m_pSpinnyCubeWeeWeeWee->GetPosition() = glm::vec3(0, 0, 9.0f);
+
     return true;
 }
 
@@ -140,6 +147,7 @@ void CEditorApp::Tick()
     auto& evtSys = g_pEngine->GetEventSystem();
 
     m_pPlayer->Tick();
+    m_pSpinnyCubeWeeWeeWee->Tick();
 
     for (int i = 0; i < evtSys.GetEventCount(); i++)
     {

@@ -10,7 +10,7 @@ typedef u32 StagingHandle_t;
 class CVkStagingBuffer
 {
 public:
-    void Init();
+    void Init(size_t size = (size_t)-1);
     void Reset();
 
     // Copy data into the staging buffer
@@ -18,6 +18,8 @@ public:
 
     // Copy data from the staging buffer into the GPU
     void DoTransfer(CVkBuffer& dst);
+
+    VkBuffer GetHandle() { return m_StagingBuffer.GetHandle(); }
 private:
     CVkBuffer m_StagingBuffer;
     void* m_pMappedData;

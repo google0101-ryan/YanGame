@@ -42,3 +42,15 @@ void CVkMemoryAllocator::MapMemory(VmaAllocation allocation, void **ppData)
 {
     vmaMapMemory(m_Allocator, allocation, ppData);
 }
+VkImage CVkMemoryAllocator::CreateImage(VkImageCreateInfo& imageInfo, VmaAllocationInfo& allocInfo, VmaAllocation& allocation)
+{
+    VkImage ret;
+
+    VmaAllocationCreateInfo createInfo = {};
+    createInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+    if (vmaCreateImage(m_Allocator, &imageInfo, &createInfo, &ret, &allocation, &allocInfo) != VK_SUCCESS)
+        LOG_FATAL("Failed to allocate image!\n");
+
+    return ret;
+}

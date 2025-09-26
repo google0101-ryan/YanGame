@@ -5,6 +5,7 @@
 #include <tier0/types.h>
 
 #include <tier2/vulkan/RenderAttachment.h>
+#include <tier2/Texture.h>
 
 #include <vector>
 

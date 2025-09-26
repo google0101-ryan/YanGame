@@ -98,7 +98,24 @@ void CVkDevice::Init()
     VkPhysicalDeviceFeatures features = {};
     features.samplerAnisotropy = VK_TRUE;
 
+    VkPhysicalDeviceVulkan12Features vk12Feats = {};
+    vk12Feats.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    vk12Feats.runtimeDescriptorArray = VK_TRUE;
+    vk12Feats.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    vk12Feats.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    vk12Feats.shaderUniformBufferArrayNonUniformIndexing = VK_TRUE;
+    vk12Feats.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
+    vk12Feats.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+    vk12Feats.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
+    vk12Feats.descriptorBindingPartiallyBound = VK_TRUE;
+
+    VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures2.pNext = &vk12Feats;
+    deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+
     VkPhysicalDeviceDynamicRenderingFeatures dynamic = {};
+    dynamic.pNext = &deviceFeatures2;
     dynamic.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
     dynamic.dynamicRendering = VK_TRUE;
 
@@ -114,7 +131,6 @@ void CVkDevice::Init()
     createInfo.pQueueCreateInfos = queueInfos.data();
     createInfo.enabledExtensionCount = m_DesiredExtensions.size();
     createInfo.ppEnabledExtensionNames = m_DesiredExtensions.data();
-    createInfo.pEnabledFeatures = &features;
 
     if (vkCreateDevice(m_PhysicalHandle, &createInfo, nullptr, &m_DeviceHandle) != VK_SUCCESS)
         LOG_FATAL("Failed to create vulkan device!\n");

@@ -9,9 +9,12 @@
 
 static CCvar g_StagingBufferSize("staging_size_mb", "16", "Size of the staging buffers in MiBs");
 
-void CVkStagingBuffer::Init()
+void CVkStagingBuffer::Init(size_t size)
 {
-    m_Size = g_StagingBufferSize.GetInt()*1024*1024;
+    if (size == (size_t)-1)
+        m_Size = g_StagingBufferSize.GetInt()*1024*1024;
+    else
+        m_Size = size;
     
     m_StagingBuffer.Init(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     m_pMappedData = m_StagingBuffer.Map();

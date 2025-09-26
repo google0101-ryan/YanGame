@@ -4,6 +4,8 @@
 #include <tier0/assert.h>
 #include <array>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
 class IGameObject;
@@ -26,6 +28,8 @@ public:
         m_Pos = glm::vec3(0.0f);
         m_Rotation = glm::vec3(0.0f);
         m_Scale = glm::vec3(1.0f);
+
+        m_iComponentCount = 0;
     }
 
     virtual ~IGameObject()
